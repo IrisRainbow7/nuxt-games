@@ -57,13 +57,13 @@
           </tbody>
         </table>
       </div>
-      <div v-if="win===0 && ready" class="text-center mt-2 font-weight-bold">
+      <div v-if="status===GameStatus.PENDING && ready" class="text-center mt-2 font-weight-bold">
         {{ turn ? 'あなたの番です' : '相手の番です' }}
       </div>
-      <div v-if="win!==0" class="text-center mt-2 font-weight-bold">
-        {{ win === 1 ? 'あなたの勝ちです' : 'あなたの負けです' }}
+      <div v-if="status!==GameStatus.PENDING" class="text-center mt-2 font-weight-bold">
+        {{ status === GameStatus.DRAW ? '引き分けです！' : status === GameStatus.WIN ? 'あなたの勝ちです' : 'あなたの負けです' }}
       </div>
-      <div v-if="win !==0" class="text-center">
+      <div v-if="status!==GameStatus.PENDING" class="text-center">
         <v-btn @click="requestGameReset">
           もう一回!
         </v-btn>
@@ -75,17 +75,35 @@
   </v-card>
 </template>
 
-<script>
+<script lang="ts">
+import Vue from 'vue'
 import io from 'socket.io-client'
 
-export default {
+interface Message {
+  index: number,
+  value: number
+}
+
+const GameStatus = {
+  PENDING: 0,
+  WIN: 1,
+  LOSE: 2,
+  DRAW: 3
+}
+
+type GameStatus = typeof GameStatus[keyof typeof GameStatus]
+
+export default Vue.extend({
   validate ({ params }) {
     return params.rid!== undefined && params.rid.length === 8
   },
   data() {
+    const socket: any = null
+    const status: GameStatus = GameStatus.PENDING
     return {
+      GameStatus,
       roomId: '',
-      socket: '',
+      socket,
       name: '',
       name2: '',
       nameEntered: false,
@@ -93,36 +111,39 @@ export default {
       ready: false,
       value: 2,
       turn: false,
-      win: 0,
+      status,
     }
   },
   mounted() {
     this.roomId = this.$route.params.rid
     this.socket = io('/tic-tac-toe', { path: '/api/socket.io/' })
-    this.socket.on('new-member', name => {
+    this.socket.on('new-member', (name: string) => {
       if (!this.ready && this.name !== name) {
         this.socket.emit('join', this.roomId, this.name)
         this.name2 = name
         this.ready = true
-      } else if (this.name !== name) {
+      } else if (this.name !== name && this.cells.every(el => el === 0)) {
         this.value = 1
         this.turn = true
       }
     })
-    this.socket.on('new-msg', msg => {
+    this.socket.on('new-msg', (msg: Message) => {
       if (msg.value !== this.value) {
         this.$set(this.cells, msg.index, msg.value)
         this.turn = true
       }
       [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]].forEach((i) => {
         if (this.cells[i[0]] !== 0 && this.cells[i[1]] !== 0 && this.cells[i[2]] !== 0 && this.cells[i[0]] === this.cells[i[1]] && this.cells[i[1]] === this.cells[i[2]]) {
-          this.win = this.cells[i[0]] === this.value ? 1 : 2
+          this.status = this.cells[i[0]] === this.value ? GameStatus.WIN : GameStatus.LOSE
+        }
+        if (this.status === GameStatus.PENDING && this.cells.every(el => el !== 0)) {
+          this.status = GameStatus.DRAW
         }
       })
     })
     this.socket.on('reset-game', () => {
       this.cells = Array(9).fill(0)
-      this.win = 0
+      this.status = GameStatus.PENDING
       this.turn = this.value === 1
     })
   },
@@ -131,8 +152,8 @@ export default {
       this.socket.emit('join', this.roomId, this.name)
       this.nameEntered = true
     },
-    onClick(index) {
-      if (this.cells[index] === 0 && this.turn && this.win === 0) {
+    onClick(index: number) {
+      if (this.cells[index] === 0 && this.turn && this.status === GameStatus.PENDING) {
         this.$set(this.cells, index, this.value)
         const message = {
           index: index,
@@ -146,7 +167,7 @@ export default {
       this.socket.emit('reset-game', this.roomId)
     }
   }
-}
+})
 </script>
 
 <style scoped>
