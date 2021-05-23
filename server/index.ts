@@ -11,15 +11,34 @@ app.get('/api/get', (req: Request, res: Response) => {
   res.send('hello world')
 })
 
-io.on('connection', (socket: Socket) => {
+const ioChat = io.of('/chat')
+
+ioChat.on('connection', (socket: Socket) => {
 
   socket.on('join', (roomId: string) => {
     socket.join(roomId)
   })
 
-  // send-msgイベントを受け取ったらブロードキャストする
   socket.on('send-msg', (msg: string, roomId: string) => {
-    io.to(roomId).emit('new-msg', msg)
+    ioChat.to(roomId).emit('new-msg', msg)
+  })
+})
+
+const ioTicTacToe = io.of('/tic-tac-toe')
+
+ioTicTacToe.on('connection', (socket: Socket) => {
+
+  socket.on('join', (roomId: string, name: string) => {
+    socket.join(roomId)
+    ioTicTacToe.to(roomId).emit('new-member', name)
+  })
+
+  socket.on('send-msg', (roomId: string, msg: string) => {
+    ioTicTacToe.to(roomId).emit('new-msg', msg)
+  })
+
+  socket.on('reset-game', (roomId: string) => {
+    ioTicTacToe.to(roomId).emit('reset-game')
   })
 })
 
