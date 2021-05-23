@@ -42,7 +42,7 @@ export default {
     }
   },
   mounted() {
-    this.socket = io('localhost:3000', { path: '/api/socket.io/' })
+    this.socket = io('/chat', { path: '/api/socket.io/' })
     this.socket.emit('join', this.$route.params.rid)
     this.socket.on('new-msg', msg => {
       this.msgs.unshift(msg)
