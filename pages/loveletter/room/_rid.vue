@@ -26,15 +26,15 @@
       </template>
       <template v-else>
         <div v-for="m in members" :key="`c${m.id}`">
-          {{m.isDead ? '☠' : '　' }}{{ m.name }} : {{ finished ? m.isDead ? `(${m.hands})` : m.hands : m.discards }}
+          {{m.isDead ? '☠' : '　' }}{{ m.name }} : {{ finished ? m.isDead ? '('+m.hands+')' : m.hands : m.discards }}
         </div>
         <br>
         <template v-if="hands.length === 2">
           捨てるカードを選んでください
-          <v-btn @click="discard(0)">
+          <v-btn @click="discard(0)" :disabled="hands[0] === 10">
             {{ hands[0] }}
           </v-btn>
-          <v-btn @click="discard(1)">
+          <v-btn @click="discard(1)" :disabled="hands[1] === 10">
             {{ hands[1] }}
           </v-btn>
         </template>
@@ -67,6 +67,40 @@
             </v-container>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="helpDialog" width="1000">
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn v-bind="attrs" v-on="on" fav class="floating2">
+              <v-icon>
+                mdi-help-circle-outline
+              </v-icon>
+            </v-btn>
+          </template>
+          <v-card>
+            <v-card-title>
+              ルール
+            </v-card-title>
+            <v-container>
+              <v-row>
+                <v-col cols="12">
+                  <a href="https://www.happybrainwash.com/xeno" target="_blank">
+                    ルール（公式サイト)
+                  </a>
+                </v-col>
+              </v-row>
+                <v-col cols="12">
+                  <card-table />
+                </v-col>
+              <v-row>
+              </v-row>
+            </v-container>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn @click="helpDialog=false">
+                閉じる
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
         <v-dialog v-model="playerSelectDialog" width="500">
           <v-card>
             <v-card-title>
@@ -77,6 +111,23 @@
             </v-radio-group>
             <div class="text-center">
               <v-btn @click="discardWithID(discardIndex, playerID)" block class="primary" :disabled="playerID === ''">
+                確定
+              </v-btn>
+            </div>
+          </v-card>
+        </v-dialog>
+        <v-dialog v-model="playerSelectDialog2" width="500">
+          <v-card>
+            <v-card-title>
+              プレイヤーを選択してください
+            </v-card-title>
+            <v-radio-group v-model="playerID">
+              <v-radio v-for="m in members" :key="m.id" :label="m.name" :value="m.id" :disabled="m.id === socket.id || m.isDead" class="ml-2"/>
+            </v-radio-group>
+            <v-divider />
+            <v-select v-model="playerCard" :items="[1,2,3,4,5,6,7,8,9,10]" label="手札のカード予想" />
+            <div class="text-center">
+              <v-btn @click="discardWithIDNum(discardIndex, playerID, playerCard)" block class="primary" :disabled="playerID === ''">
                 確定
               </v-btn>
             </div>
@@ -97,6 +148,21 @@
             </div>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="action2Dialog" width="500">
+          <v-card>
+            <v-card-title>
+              カードを選択してください
+            </v-card-title>
+            <v-radio-group v-model="cardNum">
+              <v-radio v-for="n in actionHands" :key="`actionhands${n}`" :label="n" :value="n" class="ml-2"/>
+            </v-radio-group>
+            <div class="text-center">
+              <v-btn @click="responseAction2" block class="primary" :disabled="cardNum === ''">
+                確定
+              </v-btn>
+            </div>
+          </v-card>
+        </v-dialog>
         <v-dialog v-model="showHandsDialog" width="500">
           <v-card>
             <v-textarea solo flat auto-grow no-resize readonly :value="showHandsText" />
@@ -108,6 +174,21 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="action3Dialog" width="500">
+          <v-card>
+            <v-card-title>
+              カードを選択してください
+            </v-card-title>
+            <v-radio-group v-model="cardNum">
+              <v-radio v-for="n in actionHands" :key="`actionhands${n}`" :label="n" :value="n" class="ml-2"/>
+            </v-radio-group>
+            <div class="text-center">
+              <v-btn @click="responseAction3" block class="primary" :disabled="cardNum === ''">
+                確定
+              </v-btn>
+            </div>
+          </v-card>
+        </v-dialog>
       </template>
     </template>
   </v-card>
@@ -116,6 +197,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import io from 'socket.io-client'
+import CardTable from '@/components/CardTable.vue'
 
 interface Member {
   id: string,
@@ -126,6 +208,9 @@ interface Member {
 }
 
 export default Vue.extend({
+  components: {
+    CardTable
+  },
   validate ({ params }) {
     return params.rid !== undefined && params.rid.length === 8
   },
@@ -134,6 +219,7 @@ export default Vue.extend({
     const members: Member[] = []
     const hands: number[] = []
     const logs: string[] = []
+    const actionHands: number[] = []
     return {
       roomId: '',
       socket,
@@ -145,13 +231,20 @@ export default Vue.extend({
       finished: false,
       discardIndex: 0,
       playerSelectDialog: false,
+      playerSelectDialog2: false,
       playerID: '',
+      playerCard: 1,
       logs,
       actionDialog: false,
       action: '',
       showHandsText: '',
       showHandsDialog: false,
-      cardNames: new Map([['10', '英雄'], ['9', '皇帝'], ['8', '精霊'], ['7', '賢者'], ['6', '貴族'], ['5', '死神'], ['4', '乙女'], ['3', '占い師'], ['2', '兵士'], ['1', '少年']])
+      cardNames: new Map([['10', '英雄'], ['9', '皇帝'], ['8', '精霊'], ['7', '賢者'], ['6', '貴族'], ['5', '死神'], ['4', '乙女'], ['3', '占い師'], ['2', '兵士'], ['1', '少年']]),
+      action2Dialog: false,
+      actionHands,
+      cardNum: '',
+      helpDialog: false,
+      action3Dialog: false,
     }
   },
   mounted() {
@@ -169,17 +262,26 @@ export default Vue.extend({
     this.socket.on('game-start', () => {
       this.started = true
     })
-    this.socket.on('request-action', (action: string) => {
-      if (['6f', '6s'].includes(action)) {
+    this.socket.on('request-action', (action: string, numbers: number[]) => {
+      if (['6f', '6s', '1sf'].includes(action)) {
         this.actionDialog = true
         this.action = action
+      } else if (action === '9' || action === '1ss') {
+        this.action2Dialog = true
+        this.action = action
+        this.actionHands = numbers
+      } else if (action === '7') {
+        this.action3Dialog = true
+        this.action = action
+        this.actionHands = numbers
       }
     })
-    this.socket.on('show-hands', (action: string, id: string, hands: string) => {
-      const u = this.members.find(m => m.id === id)
-      if (u !== undefined) {
+    this.socket.on('show-hands', (oid: string, action: string, id: string, hands: string) => {
+      const u = this.members.find(m => m.id === oid)
+      const u2 = this.members.find(m => m.id === id)
+      if (u !== undefined && u2 !== undefined) {
         const cardname = this.cardNames.get(action.substring(0, 1))
-        this.showHandsText = `${u.name}さんの「${cardname}」の効果\n ${u.name}さんの手札は[${hands}]です`
+        this.showHandsText = `${u.name}さんの「${cardname}」の効果\n${u2.name}さんの手札は[${hands}]です`
         this.showHandsDialog = true
       }
     })
@@ -200,26 +302,52 @@ export default Vue.extend({
       this.started = true
     },
     discard (index: number) {
-      if ([8].includes(this.hands[index])) {
+      if ([8, 9, 3, 5].includes(this.hands[index])) {
         this.playerSelectDialog = true
         this.discardIndex = index
+      } else if (this.hands[index] === 2) {
+        this.playerSelectDialog2 = true
+        this.discardIndex = index
       } else {
-        this.socket.emit('discard', this.roomId, this.hands[index], '')
+        this.socket.emit('discard', this.roomId, this.hands[index], '', 0)
         this.hands.splice(index, 1)
       }
     },
     discardWithID (index: number, id: string) {
-      this.socket.emit('discard', this.roomId, this.hands[index], id)
+      this.socket.emit('discard', this.roomId, this.hands[index], id, 0)
       this.hands.splice(index, 1)
       this.playerSelectDialog = false
       this.playerID = ''
     },
+    discardWithIDNum (index: number, id: string, card: number) {
+      this.socket.emit('discard', this.roomId, this.hands[index], id, card)
+      this.hands.splice(index, 1)
+      this.playerSelectDialog2 = false
+      this.playerID = ''
+      this.playerCard = 1
+    },
     responseAction () {
-      if (['6f', '6s'].includes(this.action)) {
+      if (['6f', '6s', '1sf'].includes(this.action)) {
         this.socket.emit('response-action', this.roomId, this.action, this.playerID)
       }
       this.actionDialog = false
       this.playerID = ''
+    },
+    responseAction2 () {
+      if (this.action === '9' || this.action === '1ss') {
+        this.socket.emit('response-action', this.roomId, this.action, String(this.cardNum))
+      }
+      this.action2Dialog = false
+      this.cardNum = ''
+      this.actionHands = []
+    },
+    responseAction3 () {
+      if (this.action === '7') {
+        this.socket.emit('response-action', this.roomId, this.action, String(this.cardNum))
+      }
+      this.action3Dialog = false
+      this.cardNum = ''
+      this.actionHands = []
     },
     closeShowHandsDialog () {
       this.showHandsText = ''
@@ -236,6 +364,12 @@ export default Vue.extend({
 .floating{
   position: fixed;
   bottom: 10px;
+  right: 10px;
+  padding: 6px 40px;
+}
+.floating2{
+  position: fixed;
+  bottom: 60px;
   right: 10px;
   padding: 6px 40px;
 }
