@@ -69,7 +69,7 @@
         </v-dialog>
         <v-dialog v-model="helpDialog" width="1000">
           <template v-slot:activator="{ on, attrs }">
-            <v-btn v-bind="attrs" v-on="on" fav class="floating2">
+            <v-btn v-bind="attrs" v-on="on" fav class="floating2" :style="{ 'z-index': helpDialog ? 1 : 1000}">
               <v-icon>
                 mdi-help-circle-outline
               </v-icon>
@@ -101,7 +101,7 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
-        <v-dialog v-model="playerSelectDialog" width="500">
+        <v-dialog persistent v-model="playerSelectDialog" width="500">
           <v-card>
             <v-card-title>
               プレイヤーを選択してください
@@ -116,7 +116,7 @@
             </div>
           </v-card>
         </v-dialog>
-        <v-dialog v-model="playerSelectDialog2" width="500">
+        <v-dialog persistent v-model="playerSelectDialog2" width="500">
           <v-card>
             <v-card-title>
               プレイヤーを選択してください
@@ -133,7 +133,7 @@
             </div>
           </v-card>
         </v-dialog>
-        <v-dialog v-model="actionDialog" width="500">
+        <v-dialog persistent v-model="actionDialog" width="500">
           <v-card>
             <v-card-title>
               プレイヤーを選択してください
@@ -148,7 +148,7 @@
             </div>
           </v-card>
         </v-dialog>
-        <v-dialog v-model="action2Dialog" width="500">
+        <v-dialog persistent v-model="action2Dialog" width="500">
           <v-card>
             <v-card-title>
               カードを選択してください
@@ -174,7 +174,7 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
-        <v-dialog v-model="action3Dialog" width="500">
+        <v-dialog persistent v-model="action3Dialog" width="500">
           <v-card>
             <v-card-title>
               カードを選択してください

@@ -199,12 +199,29 @@ ioLoveletter.on('connection', (socket: Socket) => {
         } else if (num === 5) {
           const u2 = l.users.find(user => user.id === id)
           if (u2 !== undefined && !u2.protected && l.cards.length > 0) {
-            u2.hands.push(l.cards.splice(Math.floor(Math.random() * l.cards.length), 1)[0])
-            u2.discards.push(u2.hands.splice(Math.floor(Math.random() * 2), 1)[0])
+            const draw = l.cards.splice(Math.floor(Math.random() * l.cards.length), 1)[0]
+            u2.hands.push(draw)
+            const discard = u2.hands.splice(Math.floor(Math.random() * 2), 1)[0]
+            u2.discards.push(discard)
             l.users.forEach(user => {
-              user.logs.push(`${u.name}の「死神」の効果で${u2.name}は手札を1枚引いたあと1枚捨てた`)
-              ioLoveletter.to(user.id).emit('update-logs', user.logs)
+              if (user.id !== u2.id) {
+                user.logs.push(`${u.name}の「死神」の効果で${u2.name}は手札を1枚引いたあと1枚捨てた`)
+                ioLoveletter.to(user.id).emit('update-logs', user.logs)
+              }
             })
+            u2.logs.push(`${u.name}の「死神」の効果で${draw}を引いたあと${discard}を捨てた`)
+            ioLoveletter.to(u2.id).emit('update-logs', u2.logs)
+            if (discard === 10) {
+              u2.discards.push(u2.hands.splice(0, 1)[0])
+              if (l.extra !== undefined) {
+                u2.hands = [l.extra]
+              }
+              ioLoveletter.to(u2.id).emit('update-hands', u2.hands)
+              l.users.forEach(user => {
+                user.logs.push(`${u.name}の「死神」の効果で${u2.name}は「英雄」を捨てられたため転生した`)
+                ioLoveletter.to(user.id).emit('update-logs', user.logs)
+              })
+            }
           }
         } else if (num === 4) {
           u.protected = true
@@ -222,8 +239,17 @@ ioLoveletter.on('connection', (socket: Socket) => {
           if (u2 !== undefined && !u2.protected) {
             let log = ''
             if (u2.hands[0] === num2) {
-              u2.isDead = true
-              log = `${u.name}の「兵士」の効果で${u2.name}の手札を[${num2}]と予想し、正解したため${u2.name}は脱落した`
+              if (num2 === 10) {
+                u2.discards.push(u2.hands.splice(0, 1)[0])
+                if (l.extra !== undefined) {
+                  u2.hands = [l.extra]
+                }
+                ioLoveletter.to(u2.id).emit('update-hands', u2.hands)
+                log = (`${u.name}の「兵士」の効果で${u2.name}の手札を[${num2}]と予想し、正解したが「英雄」だったため転生した`)
+              } else {
+                u2.isDead = true
+                log = `${u.name}の「兵士」の効果で${u2.name}の手札を[${num2}]と予想し、正解したため${u2.name}は脱落した`
+              }
             } else {
               log = `${u.name}の「兵士」の効果で${u2.name}の手札を[${num2}]と予想したが外れた`
             }
@@ -306,7 +332,7 @@ ioLoveletter.on('connection', (socket: Socket) => {
       const u = l.users.find(user => user.id === l.actionUser)
       if (action === '6f') {
         const u2 = l.users.find(user => user.id === response)
-        if (u !== undefined && u2 !== undefined) {
+        if (u !== undefined && u2 !== undefined && !u2.protected) {
           l.users.forEach(user => {
             if (user.id !== u.id && user.id !== u2.id) {
               user.logs.push(`${u.name}が「貴族」の効果で${u2.name}と手札を見せ合った`)
@@ -322,7 +348,7 @@ ioLoveletter.on('connection', (socket: Socket) => {
         }
       } else if (action === '6s') {
         const u2 = l.users.find(user => user.id === response)
-        if (u !== undefined && u2 !== undefined) {
+        if (u !== undefined && u2 !== undefined && !u2.protected) {
           l.users.forEach(user => {
             if (user.id !== u.id && user.id !== u2.id) {
               user.logs.push(`${u.name}の「貴族」の効果で${u2.name}と手札を見せ合い、${u.hands[0] === u2.hands[0] ? '引き分けた' : u.hands[0] > u2.hands[0] ? `${u.name}が勝利した` : `${u2.name}が勝利した`}`)
@@ -346,10 +372,10 @@ ioLoveletter.on('connection', (socket: Socket) => {
         }
       } else if (action === '1sf') {
         const u2 = l.users.find(user => user.id === response)
-        if (u !== undefined && u2 !== undefined) {
+        if (u !== undefined && u2 !== undefined && !u2.protected) {
           const card = l.cards.splice(Math.floor(Math.random() * l.cards.length), 1)[0]
           u2.hands.push(card)
-          u2.logs.push(`${u.name}の「皇帝」の効果で${card}を引きました`)
+          u2.logs.push(`${u.name}の「少年」の効果で${card}を引きました`)
           ioLoveletter.to(u2.id).emit('update-logs', u2.logs)
           l.users.forEach(user => {
             if (user.id !== u.id && user.id !== u2.id) {
@@ -364,7 +390,7 @@ ioLoveletter.on('connection', (socket: Socket) => {
         }
       } else if (action === '9' || action === '1ss') {
         const u2 = l.users.find(user => user.id === l.targetUser)
-        if (u !== undefined && u2 !== undefined && u2.hands.includes(Number(response))) {
+        if (u !== undefined && u2 !== undefined && u2.hands.includes(Number(response)) && !u2.protected) {
           const cardIndex = u2.hands.indexOf(Number(response))
           if (cardIndex !== undefined) {
             u2.discards.push(u2.hands.splice(u2.hands.indexOf(Number(response)), 1)[0])
@@ -372,13 +398,23 @@ ioLoveletter.on('connection', (socket: Socket) => {
               user.logs.push(`${u.name}の「${action === '9' ? '皇帝' : '少年'}」の効果で${u2.name}の${response}が捨てさせられた`)
               ioLoveletter.to(user.id).emit('update-logs', user.logs)
             })
-            if (response === '10') {
+            if (action === '9' && response === '10') {
               u2.isDead = true
               l.users.forEach(user => {
-                user.logs.push(`${u2.name}の「英雄」が「${action === '9' ? '皇帝' : '少年'}」に捨てさせられたため${u2.name}は処刑されました`)
+                user.logs.push(`${u2.name}の「英雄」が「皇帝」に捨てさせられたため${u2.name}は処刑されました`)
                 ioLoveletter.to(user.id).emit('update-logs', user.logs)
-                ioLoveletter.to(u2.id).emit('update-hands', u2.hands)
               })
+              ioLoveletter.to(u2.id).emit('update-hands', u2.hands)
+            } else if (action === '1ss' && response === '10') {
+              u2.discards.push(u2.hands.splice(0, 1)[0])
+              if (l.extra !== undefined) {
+                u2.hands = [l.extra]
+              }
+              l.users.forEach(user => {
+                user.logs.push(`${u2.name}の「英雄」が「少年」に捨てさせられたため${u2.name}は転生しました`)
+                ioLoveletter.to(user.id).emit('update-logs', user.logs)
+              })
+              ioLoveletter.to(u2.id).emit('update-hands', u2.hands)
             }
           }
         }
