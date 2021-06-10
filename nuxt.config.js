@@ -51,7 +51,11 @@ export default {
   ],
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
-  axios: {},
+  axios: {
+    baseURL: 'http://localhost:3000',
+    browserBaseURL: 'http://localhost:3000'
+    // browserBaseURL: 'https://firesalvia.plala.jp/games/'
+  },
 
   proxy: {
     '/api': {
