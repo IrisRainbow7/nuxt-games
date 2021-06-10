@@ -1,7 +1,7 @@
 <template>
   <v-card class="app-outer loveletter-outer">
     <template v-if="!nameEntered">
-      <div class="mx-3">
+      <div class="mx-3" style="padding-top:200px;">
         <v-text-field v-model="name" @keypress.enter.exact="join" label="名前を入力してください..." />
       </div>
       <div class=" text-center mx-3">
@@ -25,23 +25,70 @@
         </div>
       </template>
       <template v-else>
-        <div v-for="m in members" :key="`c${m.id}`">
-          {{m.isDead ? '☠' : '　' }}{{ m.name }} : {{ finished ? m.isDead ? '('+m.hands+')' : m.hands : m.discards }}
-        </div>
-        <br>
-        <template v-if="hands.length === 2">
-          捨てるカードを選んでください
-          <v-btn @click="discard(0)" :disabled="hands[0] === 10">
-            {{ hands[0] }}
-          </v-btn>
-          <v-btn @click="discard(1)" :disabled="hands[1] === 10">
-            {{ hands[1] }}
-          </v-btn>
-        </template>
-        <template v-else>
-          {{ finished ? 'ゲーム終了' : '他の人のターンです' }}<br>
-          あなたの手札：{{ hands }}<br>
-        </template>
+        <v-container>
+          <v-row>
+            <v-col cols="12" class="text-center text-h6">
+              捨て札
+            </v-col>
+            <v-col cols="12">
+              <v-divider />
+            </v-col>
+          </v-row>
+          <v-row no-gutters v-for="m in members" :key="`c${m.id}`">
+            <v-col cols="12" md="3" align-self="center">
+              <v-card class="pa-2" outlined tile :height="wwidth > 960 ? '60px' : '40px'">
+                <div class="text-center font-weight-bold" :style="{'padding-top': wwidth > 960 ? '8px': '0px'}">
+                  {{m.isDead ? '☠' : '　' }}{{ m.name }}
+                </div>
+              </v-card>
+            </v-col>
+            <v-col cols="12" md="9" align-self="center">
+              <v-card class="pa-2" outlined tile height="60px">
+                <template v-if="finished">
+                  {{ m.isDead ? '('+m.hands+')' : m.hands }}
+                </template>
+                <template v-else>
+                  <div v-for="(discard, i) in m.discards" :key="`${m.id}{i}{discard}`" class="card float-left">
+                    {{ discard }}
+                  </div>
+                </template>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-container>
+        <v-divider />
+        <v-container>
+          <v-row v-if="hands.length === 2">
+            <v-col cols="12" class="text-center text-h6">
+              捨てるカードを選んでください
+            </v-col>
+            <v-col cols="6">
+              <v-card @click="discard(0)" width="100%" height="100px" color="#DDD" elevation="5" :disabled="hands[0] === 10" class="discard-btn">
+                <div class="btn-content">
+                  {{ hands[0] }}
+                </div>
+              </v-card>
+            </v-col>
+            <v-col cols="6">
+              <v-card @click="discard(1)" width="100%" height="100px" color="#DDD" elevation="5" :disabled="hands[1] === 10" class="discard-btn">
+                <div class="btn-content">
+                  {{ hands[1] }}
+                </div>
+              </v-card>
+            </v-col>
+          </v-row>
+          <v-row v-else>
+            <v-col cols="12" class="text-center text-h6">
+              {{ finished ? 'ゲーム終了' : '他の人のターンです' }}<br>
+            </v-col>
+            <v-col cols="12">
+              <div style="height:100px" class="text-h5">
+                あなたの手札：{{ hands }}<br>
+              </div>
+            </v-col>
+          </v-row>
+        </v-container>
+        <v-divider />
         <div>
           ログ<br>
           <v-textarea solo flat auto-grow no-resize readonly :value="logs.join('\n')" style="border: 1px solid" />
@@ -223,6 +270,7 @@ export default Vue.extend({
     return {
       roomId: '',
       socket,
+      wwidth: 1000,
       name: '',
       nameEntered: false,
       members,
@@ -248,6 +296,7 @@ export default Vue.extend({
     }
   },
   mounted() {
+    this.wwidth = window.innerWidth
     this.roomId = this.$route.params.rid
     this.socket = io('/loveletter', { path: '/api/socket.io/' })
     this.socket.on('update-member', (members: Member[]) => {
@@ -375,5 +424,17 @@ export default Vue.extend({
 }
 .loveletter-outer{
   min-height: 100vh;
+}
+.card{
+  border: 1px solid #333;
+  padding: 8px;
+  margin-right: 10px;
+}
+.btn-content{
+  width: 20%;
+  margin: 0px auto;
+  line-height: 100px;
+  text-align: center;
+  font-size: 50px;
 }
 </style>
