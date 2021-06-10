@@ -211,7 +211,12 @@ ioLoveletter.on('connection', (socket: Socket) => {
             })
             u2.logs.push(`${u.name}の「死神」の効果で${draw}を引いたあと${discard}を捨てた`)
             ioLoveletter.to(u2.id).emit('update-logs', u2.logs)
-            if (discard === 10) {
+            ioLoveletter.to(u2.id).emit('update-hands', u2.hands)
+            if (discard === 6) {
+              l.use6 = true
+            } else if (discard === 1) {
+              l.use1 = true
+            } else if (discard === 10) {
               u2.discards.push(u2.hands.splice(0, 1)[0])
               if (l.extra !== undefined) {
                 u2.hands = [l.extra]
@@ -270,6 +275,9 @@ ioLoveletter.on('connection', (socket: Socket) => {
         if (!skipAfterProcessing) {
           if (l.cards.length === 0) {
             ioLoveletter.to(roomId).emit('empty-deck')
+            l.users.forEach(user => {
+              user.discards.push(user.hands[0])
+            })
             ioLoveletter.to(roomId).emit('update-member', l.users)
             loveletters.set(roomId, l)
             return
@@ -287,6 +295,9 @@ ioLoveletter.on('connection', (socket: Socket) => {
           const nextUser = l.users[nextUserIndex]
           if (nextUser.isDead) {
             ioLoveletter.to(roomId).emit('empty-deck')
+            l.users.forEach(user => {
+              user.discards.push(user.hands[0])
+            })
             ioLoveletter.to(roomId).emit('update-member', l.users)
             loveletters.set(roomId, l)
             return
@@ -379,7 +390,7 @@ ioLoveletter.on('connection', (socket: Socket) => {
           ioLoveletter.to(u2.id).emit('update-logs', u2.logs)
           l.users.forEach(user => {
             if (user.id !== u.id && user.id !== u2.id) {
-              ioLoveletter.to(user.id).emit('show-hands', u.id, '9', u2.id, String(u2.hands))
+              ioLoveletter.to(user.id).emit('show-hands', u.id, '1', u2.id, String(u2.hands))
             }
           })
           ioLoveletter.to(u.id).emit('request-action', '1ss', u2.hands)
@@ -398,7 +409,12 @@ ioLoveletter.on('connection', (socket: Socket) => {
               user.logs.push(`${u.name}の「${action === '9' ? '皇帝' : '少年'}」の効果で${u2.name}の${response}が捨てさせられた`)
               ioLoveletter.to(user.id).emit('update-logs', user.logs)
             })
-            if (action === '9' && response === '10') {
+            ioLoveletter.to(u2.id).emit('update-hands', u2.hands)
+            if (response === '6') {
+              l.use6 = true
+            } else if (response === '1') {
+              l.use1 = true
+            } else if (action === '9' && response === '10') {
               u2.isDead = true
               l.users.forEach(user => {
                 user.logs.push(`${u2.name}の「英雄」が「皇帝」に捨てさせられたため${u2.name}は処刑されました`)
@@ -443,10 +459,16 @@ ioLoveletter.on('connection', (socket: Socket) => {
       l.targetUser = ''
       if (l.cards.length === 0) {
         ioLoveletter.to(roomId).emit('empty-deck')
+        l.users.forEach(user => {
+          user.discards.push(user.hands[0])
+        })
         ioLoveletter.to(roomId).emit('update-member', l.users)
         loveletters.set(roomId, l)
       } else if (l.users.filter(user => !user.isDead).length === 1) {
         ioLoveletter.to(roomId).emit('empty-deck')
+        l.users.forEach(user => {
+          user.discards.push(user.hands[0])
+        })
         ioLoveletter.to(roomId).emit('update-member', l.users)
         loveletters.set(roomId, l)
       } else if (u !== undefined) {

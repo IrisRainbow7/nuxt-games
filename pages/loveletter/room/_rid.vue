@@ -36,22 +36,20 @@
           </v-row>
           <v-row no-gutters v-for="m in members" :key="`c${m.id}`">
             <v-col cols="12" md="3" align-self="center">
-              <v-card class="pa-2" outlined tile :height="wwidth > 960 ? '60px' : '40px'">
-                <div class="text-center font-weight-bold" :style="{'padding-top': wwidth > 960 ? '8px': '0px'}">
-                  {{m.isDead ? '☠' : '　' }}{{ m.name }}
+              <v-card class="pa-2" outlined tile :height="wwidth > 960 ? '60px' : '40px'" :style="{'background-color': m.isDead ? '#BBB' : '#FFF'}">
+                <div class="text-center font-weight-bold" :style="{'margin-top': wwidth > 960 ? '-2px': '-10px'}">
+                  <span style="font-size: 28px">
+                    {{ m.isDead ? '☠' : '　' }}
+                  </span>
+                  {{ m.name }}
                 </div>
               </v-card>
             </v-col>
             <v-col cols="12" md="9" align-self="center">
-              <v-card class="pa-2" outlined tile height="60px">
-                <template v-if="finished">
-                  {{ m.isDead ? '('+m.hands+')' : m.hands }}
-                </template>
-                <template v-else>
-                  <div v-for="(discard, i) in m.discards" :key="`${m.id}{i}{discard}`" class="card float-left">
-                    {{ discard }}
-                  </div>
-                </template>
+              <v-card class="pa-2" outlined tile height="60px" :style="{'background-color': m.isDead ? '#BBB' : '#FFF'}">
+                <div v-for="(discard, i) in m.discards" :key="`${m.id}{i}{discard}`" class="card float-left">
+                  {{ discard }}
+                </div>
               </v-card>
             </v-col>
           </v-row>
@@ -431,7 +429,6 @@ export default Vue.extend({
   margin-right: 10px;
 }
 .btn-content{
-  width: 20%;
   margin: 0px auto;
   line-height: 100px;
   text-align: center;
