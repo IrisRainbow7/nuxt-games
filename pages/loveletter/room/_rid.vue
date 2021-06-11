@@ -9,6 +9,11 @@
           確定
         </v-btn>
       </div>
+      <div class="text-center" style="margin-top: 200px">
+        <v-btn @click="requestGameReset" style="width:50%">
+          リセット
+        </v-btn>
+      </div>
     </template>
     <template v-else>
       <template v-if="!started">
@@ -356,6 +361,7 @@ export default Vue.extend({
       this.finished = true
     })
     this.socket.on('reset-game', () => {
+      this.reset()
     })
   },
   methods: {
@@ -423,6 +429,24 @@ export default Vue.extend({
     requestGameReset () {
       this.socket.emit('reset-game', this.roomId)
     },
+    reset () {
+      this.started = false
+      this.finished = false
+      this.discardIndex = 0
+      this.playerSelectDialog = false
+      this.playerSelectDialog2 = false
+      this.playerID = ''
+      this.playerCard = 1
+      this.actionDialog = false
+      this.action = ''
+      this.showHandsDialog = false
+      this.showHandsTexts = ['', '', '']
+      this.action2Dialog = false
+      this.actionHands = []
+      this.cardNum = ''
+      this.helpDialog = false
+      this.action3Dialog = false
+    }
   }
 })
 </script>

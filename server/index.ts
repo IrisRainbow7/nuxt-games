@@ -525,6 +525,19 @@ ioLoveletter.on('connection', (socket: Socket) => {
   })
 
   socket.on('reset-game', (roomId: string) => {
+    const l = loveletters.get(roomId)
+    if (l !== undefined) {
+      l.cards = []
+      l.started = false
+      l.use6 = false
+      l.use1 = false
+      l.action = ''
+      l.actionUser = ''
+      l.targetUser = ''
+      l.tmp = []
+      l.ruleDifferense6effect = false
+      loveletters.set(roomId, l)
+    }
     ioLoveletter.to(roomId).emit('reset-game')
   })
 
