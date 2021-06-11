@@ -254,6 +254,7 @@ ioLoveletter.on('connection', (socket: Socket) => {
                 log = (`${u.name}の「兵士」の効果で${u2.name}の手札を[${num2}]と予想し、正解したが「英雄」だったため転生した`)
               } else {
                 u2.isDead = true
+                u2.discards.push(u2.hands.splice(0, 1)[0])
                 log = `${u.name}の「兵士」の効果で${u2.name}の手札を[${num2}]と予想し、正解したため${u2.name}は脱落した`
               }
             } else {
@@ -375,11 +376,15 @@ ioLoveletter.on('connection', (socket: Socket) => {
           ioLoveletter.to(u2.id).emit('update-logs', u2.logs)
           if (u.hands[0] > u2.hands[0]) {
             u2.isDead = true
+            u2.discards.push(u2.hands.splice(0, 1)[0])
           } else if (u.hands[0] < u2.hands[0]) {
             u.isDead = true
+            u.discards.push(u.hands.splice(0, 1)[0])
           } else {
             u.isDead = true
             u2.isDead = true
+            u.discards.push(u.hands.splice(0, 1)[0])
+            u2.discards.push(u2.hands.splice(0, 1)[0])
           }
         }
       } else if (action === '1sf') {
@@ -417,6 +422,7 @@ ioLoveletter.on('connection', (socket: Socket) => {
               l.use1 = true
             } else if (action === '9' && response === '10') {
               u2.isDead = true
+              u2.discards.push(u2.hands.splice(0, 1)[0])
               l.users.forEach(user => {
                 user.logs.push(`${u2.name}の「英雄」が「皇帝」に捨てさせられたため${u2.name}は処刑されました`)
                 ioLoveletter.to(user.id).emit('update-logs', user.logs)
