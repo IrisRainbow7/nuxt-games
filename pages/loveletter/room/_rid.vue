@@ -47,7 +47,7 @@
             </v-col>
             <v-col cols="12" md="9" align-self="center">
               <v-card class="pa-2" outlined tile height="60px" :style="{'background-color': m.isDead ? '#BBB' : '#FFF'}">
-                <div v-for="(discard, i) in m.discards" :key="`${m.id}{i}{discard}`" class="card float-left">
+                <div v-for="(discard, i) in m.discards" :key="`${m.id}${i}${discard}`" class="card float-left">
                   {{ discard }}
                 </div>
               </v-card>
@@ -151,6 +151,7 @@
             <v-card-title>
               プレイヤーを選択してください
             </v-card-title>
+            {{ playerSelectText[hands[discardIndex]] }}
             <v-radio-group v-model="playerID">
               <v-radio v-for="m in members" :key="m.id" :label="m.name" :value="m.id" :disabled="m.id === socket.id || m.isDead" class="ml-2"/>
             </v-radio-group>
@@ -166,6 +167,7 @@
             <v-card-title>
               プレイヤーを選択してください
             </v-card-title>
+            {{ playerSelectText[hands[discardIndex]] }}
             <v-radio-group v-model="playerID">
               <v-radio v-for="m in members" :key="m.id" :label="m.name" :value="m.id" :disabled="m.id === socket.id || m.isDead" class="ml-2"/>
             </v-radio-group>
@@ -183,6 +185,7 @@
             <v-card-title>
               プレイヤーを選択してください
             </v-card-title>
+            {{ actionText[action] }}
             <v-radio-group v-model="playerID">
               <v-radio v-for="m in members" :key="m.id" :label="m.name" :value="m.id" :disabled="m.id === socket.id || m.isDead" class="ml-2"/>
             </v-radio-group>
@@ -198,6 +201,7 @@
             <v-card-title>
               カードを選択してください
             </v-card-title>
+            {{ actionText[action] }}
             <v-radio-group v-model="cardNum">
               <v-radio v-for="n in actionHands" :key="`actionhands${n}`" :label="n" :value="n" class="ml-2"/>
             </v-radio-group>
@@ -210,7 +214,19 @@
         </v-dialog>
         <v-dialog v-model="showHandsDialog" width="500">
           <v-card>
-            <v-textarea solo flat auto-grow no-resize readonly :value="showHandsText" />
+            <div class="pt-4 ml-4">
+              <p>
+                {{ showHandsTexts[0] }}
+              </p>
+              <p>
+                {{ showHandsTexts[1] }}さんの手札
+              </p>
+              <p>
+                <span v-for="hand in showHandsTexts[2].split(',')" :key="`showhands${hand}`" class="pa-2" style="border:1px solid">
+                  {{ hand }}
+                </span>
+              </p>
+            </div>
             <v-card-actions>
               <v-spacer />
               <v-btn @click="closeShowHandsDialog">
@@ -224,6 +240,7 @@
             <v-card-title>
               カードを選択してください
             </v-card-title>
+            {{ actionText[action] }}
             <v-radio-group v-model="cardNum">
               <v-radio v-for="n in actionHands" :key="`actionhands${n}`" :label="n" :value="n" class="ml-2"/>
             </v-radio-group>
@@ -265,6 +282,7 @@ export default Vue.extend({
     const hands: number[] = []
     const logs: string[] = []
     const actionHands: number[] = []
+    const showHandsTexts: string[] = ['', '', '']
     return {
       roomId: '',
       socket,
@@ -283,14 +301,16 @@ export default Vue.extend({
       logs,
       actionDialog: false,
       action: '',
-      showHandsText: '',
       showHandsDialog: false,
+      showHandsTexts,
       cardNames: new Map([['10', '英雄'], ['9', '皇帝'], ['8', '精霊'], ['7', '賢者'], ['6', '貴族'], ['5', '死神'], ['4', '乙女'], ['3', '占い師'], ['2', '兵士'], ['1', '少年']]),
       action2Dialog: false,
       actionHands,
       cardNum: '',
       helpDialog: false,
       action3Dialog: false,
+      actionText: { '6f': '「貴族」の効果：対面する相手を選んでください', '6s': '「貴族」の効果：対決する相手を選んでください', '1sf': '「少年」の効果：公開処刑する相手を選んでください', '9': '「皇帝」の効果：捨てさせるカードを選んでください', '1ss': '「少年」の効果：捨てさせるカードを選んでください', '7': '「賢者」の効果：手札に加えるカードを選んでください' },
+      playerSelectText: ['', '', '「兵士」の効果：プレイヤーとカードを選択してください', '「占師」の効果：プレイヤーを選択してください', '', '「死神」の効果：プレイヤーを選択してください', '', '', '「精霊」の効果：プレイヤーを選択してください', '「皇帝」の効果：プレイヤーを選択してください',]
     }
   },
   mounted() {
@@ -328,7 +348,7 @@ export default Vue.extend({
       const u2 = this.members.find(m => m.id === id)
       if (u !== undefined && u2 !== undefined) {
         const cardname = this.cardNames.get(action.substring(0, 1))
-        this.showHandsText = `${u.name}さんの「${cardname}」の効果\n${u2.name}さんの手札は[${hands}]です`
+        this.showHandsTexts = [`${u.name}さんの「${cardname}」の効果`, u2.name, hands]
         this.showHandsDialog = true
       }
     })
@@ -397,7 +417,7 @@ export default Vue.extend({
       this.actionHands = []
     },
     closeShowHandsDialog () {
-      this.showHandsText = ''
+      this.showHandsTexts = ['', '', '']
       this.showHandsDialog = false
     },
     requestGameReset () {
