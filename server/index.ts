@@ -60,6 +60,7 @@ interface Loveletter {
   tmp: number[],
   users: User[],
   started: boolean,
+  ruleDifferense6effect: boolean,
   use6: boolean,
   use1: boolean,
   action: string,
@@ -110,7 +111,7 @@ ioLoveletter.on('connection', (socket: Socket) => {
         nextThreeDraw: false,
         logs: [],
       }
-      loveletters.set(roomId, { cards: [], users: [user], started: false, use6: false, use1: false, action: '', actionUser: '', targetUser: '', tmp: [] })
+      loveletters.set(roomId, { cards: [], users: [user], started: false, use6: false, use1: false, action: '', actionUser: '', targetUser: '', tmp: [], ruleDifferense6effect: false })
       ioLoveletter.to(roomId).emit('update-member', [user])
     }
   })
@@ -184,7 +185,7 @@ ioLoveletter.on('connection', (socket: Socket) => {
         } else if (num === 7) {
           u.nextThreeDraw = true
         } else if (num === 6) {
-          if (!l.use6) {
+          if (l.ruleDifferense6effect && !l.use6) {
             l.action = '6f'
             l.actionUser = u.id
             ioLoveletter.to(u.id).emit('request-action', '6f', [])

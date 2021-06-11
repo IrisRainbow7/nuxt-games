@@ -75,17 +75,17 @@ export default {
           effect: '疫病',
           explanation: '指名した相手に山札から1枚引かせる。2枚になった相手の手札をランダムに1枚捨てさせる。'
         },
-        { rank: 6,
-          name: '貴族',
-          num: 2,
-          effect: '対面',
-          explanation: '指名した相手と手札を見せ合う。(1枚目の効果)'
-        },
+        // { rank: 6,
+        //   name: '貴族',
+        //   num: 1,
+        //   effect: '対面',
+        //   explanation: '指名した相手と手札を見せ合う。(1枚目の効果)'
+        // },
         { rank: 6,
           name: '貴族',
           num: 2,
           effect: '対決',
-          explanation: '指名した相手と手札を見せ合い、数字の小さい方が脱落する。(2枚目の効果)'
+          explanation: '指名した相手と手札を見せ合い、数字の小さい方が脱落する。'
         },
         { rank: 7,
           name: '賢者',
