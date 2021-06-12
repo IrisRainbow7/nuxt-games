@@ -21,12 +21,34 @@
           メンバー
         </div>
         <div v-for="m in members" :key="`a${m.id}`" class="text-center text-h5">
-          ・{{ m.name }}
+          ・{{ m.name }}{{ m.startPlayer ? '☆': '' }}
         </div>
         <div class="text-center mt-15">
           <v-btn @click="gameStart" style="width:50%">
             開始
           </v-btn>
+        </div>
+        <div class="text-center mt-8">
+          <v-dialog v-model="startPlayerDialog" width="500">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn v-bind="attrs" v-on="on">
+                スタートプレイヤーを指定
+              </v-btn>
+            </template>
+            <v-card>
+              <v-card-title>
+                プレイヤーを選択してください
+              </v-card-title>
+              <v-radio-group v-model="startPlayerID">
+                <v-radio v-for="m in members" :key="m.id" :label="m.name" :value="m.id" class="ml-2"/>
+              </v-radio-group>
+              <div class="text-center">
+                <v-btn @click="setStartPlayer" block class="primary" :disabled="startPlayerID === ''">
+                  確定
+                </v-btn>
+              </div>
+            </v-card>
+          </v-dialog>
         </div>
         <div class="text-center mt-15">
           <v-btn @click="requestGameReset" style="width:50%">
@@ -295,6 +317,7 @@ interface Member {
   hands: number[],
   discards: number[],
   isDead: boolean,
+  startPlayer: boolean,
 }
 
 export default Vue.extend({
@@ -340,7 +363,9 @@ export default Vue.extend({
       actionText: { '6f': '「貴族」の効果：対面する相手を選んでください', '6s': '「貴族」の効果：対決する相手を選んでください', '1sf': '「少年」の効果：公開処刑する相手を選んでください', '9': '「皇帝」の効果：捨てさせるカードを選んでください', '1ss': '「少年」の効果：捨てさせるカードを選んでください', '7': '「賢者」の効果：手札に加えるカードを選んでください' },
       playerSelectText: ['', '', '「兵士」の効果：プレイヤーとカードを選択してください', '「占師」の効果：プレイヤーを選択してください', '', '「死神」の効果：プレイヤーを選択してください', '', '', '「精霊」の効果：プレイヤーを選択してください', '「皇帝」の効果：プレイヤーを選択してください',],
       deckLength: 0,
-      handDialog: false
+      handDialog: false,
+      startPlayerID: '',
+      startPlayerDialog: false
     }
   },
   mounted() {
@@ -458,6 +483,10 @@ export default Vue.extend({
     resetRoom () {
       this.socket.emit('reset-room', this.roomId)
     },
+    setStartPlayer () {
+      this.socket.emit('set-start-player', this.roomId, this.startPlayerID)
+      this.startPlayerDialog = false
+    },
     reset () {
       this.started = false
       this.finished = false
@@ -477,6 +506,8 @@ export default Vue.extend({
       this.action3Dialog = false
       this.deckLength = 0
       this.handDialog = false
+      this.startPlayerID = ''
+      this.startPlayerDialog = false
     }
   }
 })
