@@ -10,8 +10,8 @@
         </v-btn>
       </div>
       <div class="text-center" style="margin-top: 200px">
-        <v-btn @click="requestGameReset" style="width:50%">
-          リセット
+        <v-btn @click="resetRoom" style="width:50%">
+          部屋リセット
         </v-btn>
       </div>
     </template>
@@ -26,6 +26,11 @@
         <div class="text-center mt-15">
           <v-btn @click="gameStart" style="width:50%">
             開始
+          </v-btn>
+        </div>
+        <div class="text-center mt-15">
+          <v-btn @click="requestGameReset" style="width:50%">
+            リセット
           </v-btn>
         </div>
       </template>
@@ -227,7 +232,7 @@
                 {{ showHandsTexts[1] }}さんの手札
               </p>
               <p>
-                <span v-for="hand in showHandsTexts[2].split(',')" :key="`showhands${hand}`" class="pa-2" style="border:1px solid">
+                <span v-for="hand in showHandsTexts[2].split(',')" :key="`showhands${hand}`" class="pa-2 mr-2" style="border:1px solid">
                   {{ hand }}
                 </span>
               </p>
@@ -428,6 +433,9 @@ export default Vue.extend({
     },
     requestGameReset () {
       this.socket.emit('reset-game', this.roomId)
+    },
+    resetRoom () {
+      this.socket.emit('reset-room', this.roomId)
     },
     reset () {
       this.started = false

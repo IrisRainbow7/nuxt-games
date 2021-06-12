@@ -541,6 +541,10 @@ ioLoveletter.on('connection', (socket: Socket) => {
     ioLoveletter.to(roomId).emit('reset-game')
   })
 
+  socket.on('reset-game', (roomId: string) => {
+    loveletters.delete(roomId)
+  })
+
 })
 
 server.listen(3304)
