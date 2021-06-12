@@ -571,6 +571,17 @@ ioLoveletter.on('connection', (socket: Socket) => {
       l.targetUser = ''
       l.tmp = []
       l.ruleDifferense6effect = false
+      l.users.forEach((user) => {
+        user.hands = []
+        user.discards = []
+        user.isDead = false
+        user.protected = false
+        user.nextThreeDraw = false
+        user.logs = []
+        ioLoveletter.to(user.id).emit('update-hands', [])
+        ioLoveletter.to(user.id).emit('update-logs', [])
+      })
+      ioLoveletter.to(roomId).emit('update-member', l.users, 0)
       loveletters.set(roomId, l)
     }
     ioLoveletter.to(roomId).emit('reset-game')
