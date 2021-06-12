@@ -97,7 +97,7 @@ ioLoveletter.on('connection', (socket: Socket) => {
         }
         l.users.push(user)
         loveletters.set(roomId, l)
-        ioLoveletter.to(roomId).emit('update-member', l.users)
+        ioLoveletter.to(roomId).emit('update-member', l.users, 18)
       }
     } else {
       socket.join(roomId)
@@ -112,7 +112,7 @@ ioLoveletter.on('connection', (socket: Socket) => {
         logs: [],
       }
       loveletters.set(roomId, { cards: [], users: [user], started: false, use6: false, use1: false, action: '', actionUser: '', targetUser: '', tmp: [], ruleDifferense6effect: false })
-      ioLoveletter.to(roomId).emit('update-member', [user])
+      ioLoveletter.to(roomId).emit('update-member', [user], 18)
     }
   })
 
@@ -278,9 +278,11 @@ ioLoveletter.on('connection', (socket: Socket) => {
           if (l.cards.length === 0) {
             ioLoveletter.to(roomId).emit('empty-deck')
             l.users.forEach(user => {
-              user.discards.push(user.hands[0])
+              if (user.hands.length > 0) {
+                user.discards.push(user.hands[0])
+              }
             })
-            ioLoveletter.to(roomId).emit('update-member', l.users)
+            ioLoveletter.to(roomId).emit('update-member', l.users, l.cards.length)
             loveletters.set(roomId, l)
             return
           }
@@ -298,9 +300,11 @@ ioLoveletter.on('connection', (socket: Socket) => {
           if (nextUser.isDead) {
             ioLoveletter.to(roomId).emit('empty-deck')
             l.users.forEach(user => {
-              user.discards.push(user.hands[0])
+              if (user.hands.length > 0) {
+                user.discards.push(user.hands[0])
+              }
             })
-            ioLoveletter.to(roomId).emit('update-member', l.users)
+            ioLoveletter.to(roomId).emit('update-member', l.users, l.cards.length)
             loveletters.set(roomId, l)
             return
           }
@@ -333,7 +337,7 @@ ioLoveletter.on('connection', (socket: Socket) => {
             logs: []
           })
         })
-        ioLoveletter.to(roomId).emit('update-member', _users)
+        ioLoveletter.to(roomId).emit('update-member', _users, l.cards.length)
         loveletters.set(roomId, l)
       }
     }
@@ -467,16 +471,20 @@ ioLoveletter.on('connection', (socket: Socket) => {
       if (l.cards.length === 0) {
         ioLoveletter.to(roomId).emit('empty-deck')
         l.users.forEach(user => {
-          user.discards.push(user.hands[0])
+          if (user.hands.length > 0) {
+            user.discards.push(user.hands[0])
+          }
         })
-        ioLoveletter.to(roomId).emit('update-member', l.users)
+        ioLoveletter.to(roomId).emit('update-member', l.users, l.cards.length)
         loveletters.set(roomId, l)
       } else if (l.users.filter(user => !user.isDead).length === 1) {
         ioLoveletter.to(roomId).emit('empty-deck')
         l.users.forEach(user => {
-          user.discards.push(user.hands[0])
+          if (user.hands.length > 0) {
+            user.discards.push(user.hands[0])
+          }
         })
-        ioLoveletter.to(roomId).emit('update-member', l.users)
+        ioLoveletter.to(roomId).emit('update-member', l.users, l.cards.length)
         loveletters.set(roomId, l)
       } else if (u !== undefined) {
         let nextUserIndex = l.users.indexOf(u)
@@ -518,7 +526,7 @@ ioLoveletter.on('connection', (socket: Socket) => {
             logs: []
           })
         })
-        ioLoveletter.to(roomId).emit('update-member', _users)
+        ioLoveletter.to(roomId).emit('update-member', _users, l.cards.length)
         loveletters.set(roomId, l)
       }
     }
@@ -541,7 +549,7 @@ ioLoveletter.on('connection', (socket: Socket) => {
     ioLoveletter.to(roomId).emit('reset-game')
   })
 
-  socket.on('reset-game', (roomId: string) => {
+  socket.on('reset-room', (roomId: string) => {
     loveletters.delete(roomId)
   })
 

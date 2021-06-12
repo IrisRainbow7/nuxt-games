@@ -38,6 +38,9 @@
         <v-container>
           <v-row>
             <v-col cols="12" class="text-center text-h6">
+              山札　残り{{ deckLength }}枚
+            </v-col>
+            <v-col cols="12" class="text-center text-h6">
               捨て札
             </v-col>
             <v-col cols="12">
@@ -87,7 +90,15 @@
           </v-row>
           <v-row v-else>
             <v-col cols="12" class="text-center text-h6">
-              {{ finished ? 'ゲーム終了' : '他の人のターンです' }}<br>
+              <template v-if="finished">
+                ゲーム終了<br>
+                <v-btn @click="requestGameReset">
+                  リセット
+                </v-btn>
+              </template>
+              <template v-else>
+                他の人のターンです
+              </template>
             </v-col>
             <v-col cols="12">
               <div style="height:100px" class="text-h5">
@@ -101,30 +112,9 @@
           ログ<br>
           <v-textarea solo flat auto-grow no-resize readonly :value="logs.join('\n')" style="border: 1px solid" />
         </div>
-        <v-dialog width="500">
-          <template v-slot:activator="{ on, attrs }">
-            <v-btn v-bind="attrs" v-on="on" fav class="floating">
-              <v-icon>
-                mdi-menu
-              </v-icon>
-            </v-btn>
-          </template>
-          <v-card>
-            <v-card-title>
-              メンバー
-            </v-card-title>
-            <v-container>
-              <v-row>
-                <v-col cols="12" v-for="m in members" :key="`b${m.id}`">
-                  ・{{ m.name }}
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-card>
-        </v-dialog>
         <v-dialog v-model="helpDialog" width="1000">
           <template v-slot:activator="{ on, attrs }">
-            <v-btn v-bind="attrs" v-on="on" fav class="floating2" :style="{ 'z-index': helpDialog ? 1 : 1000}">
+            <v-btn v-bind="attrs" v-on="on" fav class="floating" :style="{ 'z-index': helpDialog ? 1 : 1000}">
               <v-icon>
                 mdi-help-circle-outline
               </v-icon>
@@ -142,15 +132,43 @@
                   </a>
                 </v-col>
               </v-row>
+              <v-row>
                 <v-col cols="12">
                   <card-table />
                 </v-col>
-              <v-row>
               </v-row>
             </v-container>
             <v-card-actions>
               <v-spacer />
               <v-btn @click="helpDialog=false">
+                閉じる
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <v-dialog v-model="handDialog" width="800">
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn v-bind="attrs" v-on="on" fav class="floating2" :style="{ 'z-index': handDialog ? 1 : 2000}">
+              <v-icon>
+                mdi-cellphone-information
+              </v-icon>
+            </v-btn>
+          </template>
+          <v-card>
+            <v-card-title>
+              手札
+            </v-card-title>
+            <v-container>
+              <v-row>
+                <v-col cols="12">
+                  あなたの手札は[{{ hands[0] }}]{{ hands.length === 2 ? '　['+hands[1]+']' : '' }}です
+                </v-col>
+              </v-row>
+            </v-container>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn @click="handDialog=false">
                 閉じる
               </v-btn>
             </v-card-actions>
@@ -320,15 +338,18 @@ export default Vue.extend({
       helpDialog: false,
       action3Dialog: false,
       actionText: { '6f': '「貴族」の効果：対面する相手を選んでください', '6s': '「貴族」の効果：対決する相手を選んでください', '1sf': '「少年」の効果：公開処刑する相手を選んでください', '9': '「皇帝」の効果：捨てさせるカードを選んでください', '1ss': '「少年」の効果：捨てさせるカードを選んでください', '7': '「賢者」の効果：手札に加えるカードを選んでください' },
-      playerSelectText: ['', '', '「兵士」の効果：プレイヤーとカードを選択してください', '「占師」の効果：プレイヤーを選択してください', '', '「死神」の効果：プレイヤーを選択してください', '', '', '「精霊」の効果：プレイヤーを選択してください', '「皇帝」の効果：プレイヤーを選択してください',]
+      playerSelectText: ['', '', '「兵士」の効果：プレイヤーとカードを選択してください', '「占師」の効果：プレイヤーを選択してください', '', '「死神」の効果：プレイヤーを選択してください', '', '', '「精霊」の効果：プレイヤーを選択してください', '「皇帝」の効果：プレイヤーを選択してください',],
+      deckLength: 0,
+      handDialog: false
     }
   },
   mounted() {
     this.wwidth = window.innerWidth
     this.roomId = this.$route.params.rid
     this.socket = io('/loveletter', { path: '/api/socket.io/' })
-    this.socket.on('update-member', (members: Member[]) => {
+    this.socket.on('update-member', (members: Member[], deckLength: number) => {
       this.members = members
+      this.deckLength = deckLength
     })
     this.socket.on('update-hands', (hands: number[]) => {
       this.hands = hands
@@ -454,6 +475,8 @@ export default Vue.extend({
       this.cardNum = ''
       this.helpDialog = false
       this.action3Dialog = false
+      this.deckLength = 0
+      this.handDialog = false
     }
   }
 })
