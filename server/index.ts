@@ -438,11 +438,11 @@ ioLoveletter.on('connection', (socket: Socket) => {
             } else if (discard === 6) {
               l.use6 = true
             }
-            const discard = u2.hands.splice(0, 1)[0]
-            u2.discards.push(discard)
-            if (discard === 1) {
+            const discard2 = u2.hands.splice(0, 1)[0]
+            u2.discards.push(discard2)
+            if (discard2 === 1) {
               l.use1 = true
-            } else if (discard === 6) {
+            } else if (discard2 === 6) {
               l.use6 = true
             }
           }
