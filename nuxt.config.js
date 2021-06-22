@@ -6,7 +6,7 @@ export default {
     titleTemplate: '%s - nuxt-games',
     title: 'nuxt-games',
     htmlAttrs: {
-      lang: 'en'
+      lang: 'ja'
     },
     meta: [
       { charset: 'utf-8' },
@@ -54,7 +54,6 @@ export default {
   axios: {
     baseURL: 'http://localhost:3000',
     browserBaseURL: 'http://localhost:3000'
-    // browserBaseURL: 'https://firesalvia.plala.jp/games/'
   },
 
   proxy: {
