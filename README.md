@@ -1,5 +1,9 @@
 # nuxt-games
 
+nuxt + socket.io 製のゲームなど
+
+同一URLアクセスで複数人で遊べます
+
 ## Build Setup
 
 ```bash
