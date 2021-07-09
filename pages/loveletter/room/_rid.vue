@@ -21,7 +21,7 @@
           メンバー
         </div>
         <div v-for="m in members" :key="`a${m.id}`" class="text-center text-h5">
-          ・{{ m.name }}{{ m.startPlayer ? '☆': '' }}
+          ・{{ m.startPlayer ? '☆': '' }}{{ m.name }}[{{ m.win}}勝]
         </div>
         <div class="text-center mt-15">
           <v-btn @click="gameStart" style="width:50%">
@@ -318,6 +318,7 @@ interface Member {
   discards: number[],
   isDead: boolean,
   startPlayer: boolean,
+  win: number,
 }
 
 export default Vue.extend({

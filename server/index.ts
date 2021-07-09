@@ -53,6 +53,7 @@ interface User {
   nextThreeDraw: boolean,
   logs: string[],
   startPlayer: boolean,
+  win: number
 }
 
 interface Loveletter {
@@ -95,7 +96,8 @@ ioLoveletter.on('connection', (socket: Socket) => {
           protected: false,
           nextThreeDraw: false,
           logs: [],
-          startPlayer: false
+          startPlayer: false,
+          win: 0
         }
         l.users.push(user)
         loveletters.set(roomId, l)
@@ -113,6 +115,7 @@ ioLoveletter.on('connection', (socket: Socket) => {
         nextThreeDraw: false,
         logs: [],
         startPlayer: true,
+        win: 0
       }
       loveletters.set(roomId, { cards: [], users: [user], started: false, use6: false, use1: false, action: '', actionUser: '', targetUser: '', tmp: [], ruleDifferense6effect: false })
       ioLoveletter.to(roomId).emit('update-member', [user], 18)
@@ -308,9 +311,20 @@ ioLoveletter.on('connection', (socket: Socket) => {
         if (!skipAfterProcessing) {
           if (l.cards.length === 0) {
             ioLoveletter.to(roomId).emit('empty-deck')
+            let max = 0
             l.users.forEach(user => {
               if (user.hands.length > 0) {
                 user.discards.push(user.hands[0])
+              }
+              if (max >= 0 && !user.isDead && user.discards[user.discards.length - 1] > max) {
+                max = user.discards[user.discards.length - 1]
+              } else if (!user.isDead && user.discards[user.discards.length - 1] === max) {
+                max = -1
+              }
+            })
+            l.users.forEach(user => {
+              if (!user.isDead && user.discards[user.discards.length - 1] === max) {
+                user.win += 1
               }
             })
             ioLoveletter.to(roomId).emit('update-member', l.users, l.cards.length)
@@ -330,9 +344,20 @@ ioLoveletter.on('connection', (socket: Socket) => {
           const nextUser = l.users[nextUserIndex]
           if (nextUser.isDead) {
             ioLoveletter.to(roomId).emit('empty-deck')
+            let max = 0
             l.users.forEach(user => {
               if (user.hands.length > 0) {
                 user.discards.push(user.hands[0])
+              }
+              if (max >= 0 && !user.isDead && user.discards[user.discards.length - 1] > max) {
+                max = user.discards[user.discards.length - 1]
+              } else if (!user.isDead && user.discards[user.discards.length - 1] === max) {
+                max = -1
+              }
+            })
+            l.users.forEach(user => {
+              if (!user.isDead && user.discards[user.discards.length - 1] === max) {
+                user.win += 1
               }
             })
             ioLoveletter.to(roomId).emit('update-member', l.users, l.cards.length)
@@ -366,7 +391,8 @@ ioLoveletter.on('connection', (socket: Socket) => {
             protected: false,
             nextThreeDraw: false,
             logs: [],
-            startPlayer: _u.startPlayer
+            startPlayer: _u.startPlayer,
+            win: _u.win
           })
         })
         ioLoveletter.to(roomId).emit('update-member', _users, l.cards.length)
@@ -532,18 +558,40 @@ ioLoveletter.on('connection', (socket: Socket) => {
       l.targetUser = ''
       if (l.cards.length === 0) {
         ioLoveletter.to(roomId).emit('empty-deck')
+        let max = 0
         l.users.forEach(user => {
           if (user.hands.length > 0) {
             user.discards.push(user.hands[0])
+          }
+          if (max >= 0 &&!user.isDead && user.discards[user.discards.length - 1] > max) {
+            max = user.discards[user.discards.length - 1]
+          } else if (!user.isDead && user.discards[user.discards.length - 1] === max) {
+            max = -1
+          }
+        })
+        l.users.forEach(user => {
+          if (!user.isDead && user.discards[user.discards.length - 1] === max) {
+            user.win += 1
           }
         })
         ioLoveletter.to(roomId).emit('update-member', l.users, l.cards.length)
         loveletters.set(roomId, l)
       } else if (l.users.filter(user => !user.isDead).length === 1) {
         ioLoveletter.to(roomId).emit('empty-deck')
+        let max = 0
         l.users.forEach(user => {
           if (user.hands.length > 0) {
             user.discards.push(user.hands[0])
+          }
+          if (max >= 0 && !user.isDead && user.discards[user.discards.length - 1] > max) {
+            max = user.discards[user.discards.length - 1]
+          } else if (!user.isDead && user.discards[user.discards.length - 1] === max) {
+            max = -1
+          }
+        })
+        l.users.forEach(user => {
+          if (!user.isDead && user.discards[user.discards.length - 1] === max) {
+            user.win += 1
           }
         })
         ioLoveletter.to(roomId).emit('update-member', l.users, l.cards.length)
@@ -586,7 +634,8 @@ ioLoveletter.on('connection', (socket: Socket) => {
             protected: false,
             nextThreeDraw: false,
             logs: [],
-            startPlayer: _u.startPlayer
+            startPlayer: _u.startPlayer,
+            win: _u.win
           })
         })
         ioLoveletter.to(roomId).emit('update-member', _users, l.cards.length)
